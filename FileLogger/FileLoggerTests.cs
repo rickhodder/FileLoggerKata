@@ -18,6 +18,6 @@ public class FileLoggerTests
         var lines = File.ReadAllLines(_outputPath);
         var lastLine = lines[lines.Length-1];
         
-        Assert.Equal("test",lastLine.Substring(lastLine.Length-4)); 
+        Assert.Equal(expectedMessage,lastLine.Substring(lastLine.Length-expectedMessage.Length)); 
     }
 }
