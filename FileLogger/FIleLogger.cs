@@ -9,8 +9,11 @@ public class FileLogger
     {
         _path = path;
     }
+
     public void Log(string message)
     {
-        File.AppendAllLines(_path,new string[] { $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}"});
+        var fileName = $"{DateTime.Now:yyyyMMdd}.txt";
+        File.AppendAllLines(Path.Combine(_path,fileName), new string[] {$"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}"});
     }
 }
+
