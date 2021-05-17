@@ -12,7 +12,7 @@ public class FileLoggerTests
 
     public FileLoggerTests()
     {
-        _systemFunctions = new FakeSystemFunctions();
+        _systemFunctions = new FakeSystemFunctions {CurrentDateTime = GetAWeekday()};
         _sut = new FileLogger(_outputPath, _systemFunctions);
     }
 
@@ -20,7 +20,6 @@ public class FileLoggerTests
     public void Log_VerifyLoggingOnDifferentDaysCreatesDifferentFiles()
     {
         var expectedFilePath = GetExpectedFilePath();
-        _systemFunctions.CurrentDateTime = new DateTime(2021, 5, 16);
 
         if (File.Exists(expectedFilePath))
         {
@@ -30,7 +29,7 @@ public class FileLoggerTests
         var expectedMessage = "test";
         _sut.Log(expectedMessage);
 
-        _systemFunctions.CurrentDateTime = new DateTime(2021, 5, 17);
+        _systemFunctions.CurrentDateTime = _systemFunctions.CurrentDateTime.AddDays(1);
 
         var expectedFilePath2 = GetExpectedFilePath();
 
@@ -44,10 +43,40 @@ public class FileLoggerTests
         Assert.True(File.Exists(expectedFilePath2));
     }
 
+    [Fact]
+    public void Log_CreatesLogFileBasedOnDateWeekendSaturday()
+    {
+        _systemFunctions.CurrentDateTime = GetASaturday();
 
+        var expectedFilePath = GetExpectedFilePath();
+        if (File.Exists(expectedFilePath))
+            File.Delete(expectedFilePath);
+
+        var expectedMessage = "test";
+        _sut.Log(expectedMessage);
+
+        Assert.True(expectedFilePath.EndsWith("weekend.txt",StringComparison.CurrentCultureIgnoreCase));
+        Assert.True(File.Exists(expectedFilePath));
+    }
 
     [Fact]
-    public void Log_CreatesLogFileBasedOnDate()
+    public void Log_CreatesLogFileBasedOnDateWeekendSunday()
+    {
+        _systemFunctions.CurrentDateTime = GetASunday();
+
+        var expectedFilePath = GetExpectedFilePath();
+        if (File.Exists(expectedFilePath))
+            File.Delete(expectedFilePath);
+
+        var expectedMessage = "test";
+        _sut.Log(expectedMessage);
+
+        Assert.True(expectedFilePath.EndsWith("weekend.txt", StringComparison.CurrentCultureIgnoreCase));
+        Assert.True(File.Exists(expectedFilePath));
+    }
+
+    [Fact]
+    public void Log_CreatesLogFileBasedOnDateWeekday()
     {
         var expectedFilePath = GetExpectedFilePath();
         if(File.Exists(expectedFilePath))
@@ -84,6 +113,8 @@ public class FileLoggerTests
     [Fact]
     public void Log_CreatesFileIfDoesNotExist()
     {
+        GetAWeekday();
+
         var expectedFilePath = GetExpectedFilePath();
 
         var expectedMessage = "test";
@@ -92,8 +123,29 @@ public class FileLoggerTests
         Assert.True(File.Exists(expectedFilePath));
     }
 
+    private DateTime GetAWeekday()
+    {
+        return new DateTime(2021, 5, 17); // weekday
+    }
+
+    private DateTime GetASaturday()
+    {
+        return new DateTime(2021, 5, 15); 
+    }
+
+    private DateTime GetASunday()
+    {
+        return new DateTime(2021, 5, 16); // weekday
+    }
+
     private string GetExpectedFilePath()
     {
+        var currentTime = _systemFunctions.GetCurrentDateTime();
+        if (currentTime.DayOfWeek==DayOfWeek.Saturday || currentTime.DayOfWeek==DayOfWeek.Sunday)
+        {
+            return Path.Combine(_outputPath, "weekend.txt");
+        }
+
         var expectedFilePath = Path.Combine(_outputPath, $"{_systemFunctions.GetCurrentDateTime():yyyyMMdd}.txt");
         
         return expectedFilePath;

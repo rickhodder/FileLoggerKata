@@ -15,8 +15,18 @@ public class FileLogger
     public void Log(string message)
     {
         var currentTime = _systemFunctions.GetCurrentDateTime();
-        var fileName = $"{currentTime:yyyyMMdd}.txt";
-        File.AppendAllLines(Path.Combine(_path,fileName), new[] {$"{currentTime:yyyy-MM-dd HH:mm:ss} {message}"});
+        var fileName = GetLogFileName(currentTime);
+        File.AppendAllLines(fileName, new[] {$"{currentTime:yyyy-MM-dd HH:mm:ss} {message}"});
+    }
+
+    private string GetLogFileName(DateTime currentTime)
+    {
+        if(currentTime.DayOfWeek == DayOfWeek.Saturday || currentTime.DayOfWeek == DayOfWeek.Sunday)
+        {
+            return Path.Combine(_path, "weekend.txt");
+        }
+
+        return Path.Combine(_path, $"{currentTime:yyyyMMdd}.txt");
     }
 }
 
