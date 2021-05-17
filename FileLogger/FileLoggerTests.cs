@@ -8,11 +8,13 @@ public class FileLoggerTests
 {
     private FileLogger _sut { get; set; }
     private string _outputPath = Environment.CurrentDirectory;
-    
+    private FakeSystemFunctions _systemFunctions;
+
 
     public FileLoggerTests()
     {
-        _sut = new FileLogger(_outputPath);
+        _systemFunctions = new FakeSystemFunctions();
+        _sut = new FileLogger(_outputPath, _systemFunctions);
     }
 
     [Fact]
@@ -67,5 +69,15 @@ public class FileLoggerTests
         
         //Debug.WriteLine($"Exp path: {expectedFilePath}");
         return expectedFilePath;
+    }
+}
+
+public class FakeSystemFunctions : ISystemFunctions
+{
+    public DateTime CurrentDateTime { get; set; } = DateTime.Now;
+
+    public DateTime GetCurrentDateTime()
+    {
+        return CurrentDateTime;
     }
 }

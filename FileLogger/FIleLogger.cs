@@ -1,19 +1,28 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 
 public class FileLogger
 {
+    private readonly ISystemFunctions _systemFunctions;
     private readonly string _path;
 
-    public FileLogger(string path)
+    public FileLogger(string path,ISystemFunctions systemFunctions)
     {
         _path = path;
+        _systemFunctions = systemFunctions;
     }
 
     public void Log(string message)
     {
-        var fileName = $"{DateTime.Now:yyyyMMdd}.txt";
-        File.AppendAllLines(Path.Combine(_path,fileName), new string[] {$"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}"});
+        var currentTime = _systemFunctions.GetCurrentDateTime();
+        var fileName = $"{currentTime:yyyyMMdd}.txt";
+        File.AppendAllLines(Path.Combine(_path,fileName), new string[] {$"{currentTime:yyyy-MM-dd HH:mm:ss} {message}"});
     }
 }
 
+public interface ISystemFunctions
+{
+    DateTime GetCurrentDateTime();
+    
+}
