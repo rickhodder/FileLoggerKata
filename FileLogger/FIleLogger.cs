@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 
 public class FileLogger
@@ -10,6 +11,6 @@ public class FileLogger
     }
     public void Log(string message)
     {
-        File.AppendAllLines(_path,new string[] {message});
+        File.AppendAllLines(_path,new string[] { $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}"});
     }
 }
