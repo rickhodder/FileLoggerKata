@@ -18,6 +18,36 @@ public class FileLoggerTests
     }
 
     [Fact]
+    public void Log_VerifyLoggingOnDifferentDaysCreatesDifferentFiles()
+    {
+        var expectedFilePath = GetExpectedFilePath();
+        _systemFunctions.CurrentDateTime = new DateTime(2021, 5, 16);
+
+        if (File.Exists(expectedFilePath))
+        {
+            File.Delete(expectedFilePath);
+        }
+
+        var expectedMessage = "test";
+        _sut.Log(expectedMessage);
+
+        _systemFunctions.CurrentDateTime = new DateTime(2021, 5, 17);
+
+        var expectedFilePath2 = GetExpectedFilePath();
+
+        if (File.Exists(expectedFilePath2))
+        {
+            File.Delete(expectedFilePath2);
+        }
+
+        _sut.Log(expectedMessage);
+
+        Assert.True(File.Exists(expectedFilePath2));
+    }
+
+
+
+    [Fact]
     public void Log_CreatesLogFileBasedOnDate()
     {
         var expectedFilePath = GetExpectedFilePath();
@@ -65,9 +95,8 @@ public class FileLoggerTests
 
     private string GetExpectedFilePath()
     {
-        var expectedFilePath = Path.Combine(_outputPath, $"{DateTime.Now:yyyyMMdd}.txt");
+        var expectedFilePath = Path.Combine(_outputPath, $"{_systemFunctions.GetCurrentDateTime():yyyyMMdd}.txt");
         
-        //Debug.WriteLine($"Exp path: {expectedFilePath}");
         return expectedFilePath;
     }
 }
