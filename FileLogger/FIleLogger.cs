@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 
 public class FileLogger
@@ -17,7 +16,7 @@ public class FileLogger
     {
         var currentTime = _systemFunctions.GetCurrentDateTime();
         var fileName = $"{currentTime:yyyyMMdd}.txt";
-        File.AppendAllLines(Path.Combine(_path,fileName), new string[] {$"{currentTime:yyyy-MM-dd HH:mm:ss} {message}"});
+        File.AppendAllLines(Path.Combine(_path,fileName), new[] {$"{currentTime:yyyy-MM-dd HH:mm:ss} {message}"});
     }
 }
 

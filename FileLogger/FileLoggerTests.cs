@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using Xunit;
@@ -7,8 +6,8 @@ using Xunit;
 public class FileLoggerTests
 {
     private FileLogger _sut { get; set; }
-    private string _outputPath = Environment.CurrentDirectory;
-    private FakeSystemFunctions _systemFunctions;
+    private readonly string _outputPath = Environment.CurrentDirectory;
+    private readonly FakeSystemFunctions _systemFunctions;
 
 
     public FileLoggerTests()
