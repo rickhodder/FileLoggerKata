@@ -7,6 +7,7 @@ public class FileLoggerTests
 {
     private FileLogger _sut { get; set; }
     private string _outputPath = "log.txt";
+    
     public FileLoggerTests()
     {
         _sut = new FileLogger(_outputPath);
@@ -34,4 +35,14 @@ public class FileLoggerTests
         
         Assert.True(timeRegex.Match(lastLine).Success);
     }
+    [Fact]
+    public void Log_CreatesFileIfDoesNotExist()
+    {
+        File.Delete(_outputPath);
+        var expectedMessage = "test";
+        _sut.Log(expectedMessage);
+
+        Assert.True(File.Exists(_outputPath));
+    }
+
 }
