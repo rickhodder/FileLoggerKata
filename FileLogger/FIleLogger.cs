@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 
 public class FileLogger
 {
@@ -21,17 +22,47 @@ public class FileLogger
 
     private string GetLogFileName(DateTime currentTime)
     {
-        if(currentTime.DayOfWeek == DayOfWeek.Saturday || currentTime.DayOfWeek == DayOfWeek.Sunday)
+        if (currentTime.IsWeekend() 
+            && File.Exists(Path.Combine(_path,"weekend.txt")))
         {
-            return Path.Combine(_path, "weekend.txt");
+            var weekend = "weekend.txt";
+            var created = File.GetCreationTime(GetPath(weekend));
+            var lastUpdated = File.GetLastWriteTime(weekend);
+            var fileDate = lastUpdated > created ? lastUpdated: created;
+
+            if (fileDate.DayOfWeek == DayOfWeek.Sunday)
+                fileDate=fileDate.AddDays(-1);
+            //rename to saturday of that weekend
+            File.Move(GetPath("weekend.txt"),GetPath($"weekend-{fileDate:yyyyMMdd}.txt"));
+
         }
 
-        return Path.Combine(_path, $"{currentTime:yyyyMMdd}.txt");
+        if(currentTime.IsWeekend())
+        {
+            return GetPath("weekend.txt");
+        }
+
+        return GetPath( $"{currentTime:yyyyMMdd}.txt");
+    }
+
+    private string GetPath(string fileName)
+    {
+        return Path.Combine(_path, fileName);
     }
 }
+
+
 
 public interface ISystemFunctions
 {
     DateTime GetCurrentDateTime();
     
+}
+
+public static class Extensions
+{
+    public static bool IsWeekend(this DateTime date)
+    {
+        return date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+    }
 }
