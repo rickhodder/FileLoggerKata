@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using Xunit;
@@ -12,7 +14,7 @@ public class FileLoggerTests
 
     public FileLoggerTests()
     {
-        _systemFunctions = new FakeSystemFunctions {CurrentDateTime = GetAWeekday()};
+        _systemFunctions = new FakeSystemFunctions { CurrentDateTime = GetAWeekday() };
         _sut = new FileLogger(_outputPath, _systemFunctions);
         CleanUpLogs();
     }
@@ -25,37 +27,39 @@ public class FileLoggerTests
 
     private void CleanUpFiles(string searchPattern)
     {
-        foreach (var file in Directory.GetFiles(_outputPath,searchPattern))
+        foreach (var file in Directory.GetFiles(_outputPath, searchPattern))
         {
             File.Delete(file);
         }
     }
 
-    [Fact]
-    public void Log_TwoSeparateWeekends_CopiesAndCreatesNewWeekend()
-    {
-        var saturday = GetASaturday();
-        var nextSaturday = saturday.AddDays(7);
+    [Theory]
+    [InlineData("2021/05/15", "2021/05/22")] // saturday one week apart
+    [InlineData("2021/05/15", "2021/05/29")] // saturday two weeks apart
 
-        _systemFunctions.CurrentDateTime = saturday;
+    public void Log_TwoSeparateWeekends_CopiesAndCreatesNewWeekend(string previousWeekendDay, string testWeekendDay)
+    {
+        var previousWeekend = DateTime.Parse(previousWeekendDay);
+        var nextWeekend = DateTime.Parse(testWeekendDay);
+
+        _systemFunctions.CurrentDateTime = previousWeekend;
 
         var weekendFile = GetPath("weekend.txt");
-        var nextWeekendFile = GetPath($"weekend-{nextSaturday:yyyyMMdd}.txt");
 
         // if i dont put this in using, it locks
         using (var _ = File.Create(weekendFile))
         {
         }
 
-        File.SetCreationTime(weekendFile,saturday);
-        File.SetLastWriteTime(weekendFile, saturday);
+        File.SetCreationTime(weekendFile, previousWeekend);
+        File.SetLastWriteTime(weekendFile, previousWeekend);
 
         var expectedMessage = "test";
-        _systemFunctions.CurrentDateTime = nextSaturday;
+        _systemFunctions.CurrentDateTime = nextWeekend;
 
         _sut.Log(expectedMessage);
 
-        var expectedFile = GetPath($"weekend-{saturday:yyyyMMdd}.txt");
+        var expectedFile = GetPath($"weekend-{previousWeekend:yyyyMMdd}.txt");
         Assert.True(File.Exists(weekendFile), $"Expected file {weekendFile} didnt exist");
         Assert.True(File.Exists(expectedFile), $"Expected file {expectedFile} didnt exist");
     }
@@ -87,7 +91,7 @@ public class FileLoggerTests
         var expectedMessage = "test";
         _sut.Log(expectedMessage);
 
-        Assert.True(expectedFilePath.EndsWith("weekend.txt",StringComparison.CurrentCultureIgnoreCase));
+        Assert.True(expectedFilePath.EndsWith("weekend.txt", StringComparison.CurrentCultureIgnoreCase));
         Assert.True(File.Exists(expectedFilePath), $"Expected file {expectedFilePath} didnt exist");
     }
 
@@ -122,9 +126,9 @@ public class FileLoggerTests
         var expectedMessage = "test";
         _sut.Log(expectedMessage);
         var lines = File.ReadAllLines(GetExpectedFilePath());
-        var lastLine = lines[lines.Length-1];
-        
-        Assert.Equal(expectedMessage,lastLine.Substring(lastLine.Length-expectedMessage.Length)); 
+        var lastLine = lines[lines.Length - 1];
+
+        Assert.Equal(expectedMessage, lastLine.Substring(lastLine.Length - expectedMessage.Length));
     }
 
     [Fact]
@@ -135,7 +139,7 @@ public class FileLoggerTests
         _sut.Log(expectedMessage);
         var lines = File.ReadAllLines(GetExpectedFilePath());
         var lastLine = lines[lines.Length - 1];
-        
+
         Assert.True(timeRegex.Match(lastLine).Success);
     }
     [Fact]
@@ -148,7 +152,7 @@ public class FileLoggerTests
         var expectedMessage = "test";
         _sut.Log(expectedMessage);
 
-        Assert.True(File.Exists(expectedFilePath),$"Expected file {expectedFilePath} didnt exist");
+        Assert.True(File.Exists(expectedFilePath), $"Expected file {expectedFilePath} didnt exist");
     }
 
     private DateTime GetAWeekday()
@@ -158,7 +162,7 @@ public class FileLoggerTests
 
     private DateTime GetASaturday()
     {
-        return new DateTime(2021, 5, 15); 
+        return new DateTime(2021, 5, 15);
     }
 
     private DateTime GetASunday()
@@ -169,14 +173,26 @@ public class FileLoggerTests
     private string GetExpectedFilePath()
     {
         var currentTime = _systemFunctions.GetCurrentDateTime();
-        if (currentTime.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+        if (currentTime.IsWeekend())
         {
+            if (File.Exists(GetPath("weekend.txt")))
+            {
+                var weekend = "weekend.txt";
+                var created = File.GetCreationTime(GetPath(weekend));
+                var lastUpdated = File.GetLastWriteTime(weekend);
+                var fileDate = lastUpdated > created ? lastUpdated : created;
+
+                if (fileDate.DayOfWeek == DayOfWeek.Sunday)
+                    fileDate = fileDate.AddDays(-1);
+
+                //rename to saturday of that weekend
+                return GetPath($"weekend-{fileDate:yyyyMMdd}.txt");
+            }
+
             return GetPath("weekend.txt");
         }
 
-        var expectedFilePath = GetPath($"log{_systemFunctions.GetCurrentDateTime():yyyyMMdd}.txt");
-        
-        return expectedFilePath;
+        return GetPath($"log{_systemFunctions.GetCurrentDateTime():yyyyMMdd}.txt");
     }
 
     private string GetPath(string fileName)

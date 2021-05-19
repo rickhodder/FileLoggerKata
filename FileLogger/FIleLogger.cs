@@ -32,12 +32,7 @@ public class FileLogger
 
             if (fileDate.DayOfWeek == DayOfWeek.Sunday)
                 fileDate=fileDate.AddDays(-1);
-            var w = GetPath("weekend.txt");
-            var x = GetPath($"weekend-{fileDate:yyyyMMdd}.txt");
-            if (File.Exists(x))
-            {
-                
-            }
+            
             //rename to saturday of that weekend
             File.Move(GetPath("weekend.txt"),GetPath($"weekend-{fileDate:yyyyMMdd}.txt"),true);
         }
