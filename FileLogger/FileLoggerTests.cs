@@ -14,6 +14,60 @@ public class FileLoggerTests
     {
         _systemFunctions = new FakeSystemFunctions {CurrentDateTime = GetAWeekday()};
         _sut = new FileLogger(_outputPath, _systemFunctions);
+        CleanUpLogs();
+    }
+
+    private void CleanUpLogs()
+    {
+        CleanUpFiles("log*.txt");
+        CleanUpFiles("weekend*.txt");
+    }
+
+    private void CleanUpFiles(string searchPattern)
+    {
+        foreach (var file in Directory.GetFiles(_outputPath,searchPattern))
+        {
+            File.Delete(file);
+        }
+    }
+
+    [Fact]
+    public void Log_TwoSeparateWeekends_CopiesAndCreatesNewWeekend()
+    {
+        var saturday = GetASaturday();
+        var nextSaturday = saturday.AddDays(7);
+
+        _systemFunctions.CurrentDateTime = saturday;
+
+        var weekendFile = GetPath("weekend.txt");
+        var nextWeekendFile = GetPath($"weekend-{nextSaturday:yyyyMMdd}.txt");
+
+        if (File.Exists(GetPath(weekendFile)))
+        {
+            File.Delete(weekendFile);
+        }
+
+        // if i dont put this in using, it locks
+        using (var _ = File.Create(weekendFile))
+        {
+        }
+
+        File.SetCreationTime(weekendFile,saturday);
+        File.SetLastWriteTime(weekendFile, saturday);
+
+        if (File.Exists(nextWeekendFile))
+        {
+            File.Delete(nextWeekendFile);
+        }
+
+        var expectedMessage = "test";
+        _systemFunctions.CurrentDateTime = nextSaturday;
+
+        _sut.Log(expectedMessage);
+
+        var expectedFile = GetPath($"weekend-{saturday:yyyyMMdd}.txt");
+        Assert.True(File.Exists(weekendFile), $"Expected file {weekendFile} didnt exist");
+        Assert.True(File.Exists(expectedFile), $"Expected file {expectedFile} didnt exist");
     }
 
     [Fact]
@@ -40,7 +94,7 @@ public class FileLoggerTests
 
         _sut.Log(expectedMessage);
 
-        Assert.True(File.Exists(expectedFilePath2));
+        Assert.True(File.Exists(expectedFilePath2), $"Expected file {expectedFilePath2} didnt exist");
     }
 
     [Fact]
@@ -56,7 +110,7 @@ public class FileLoggerTests
         _sut.Log(expectedMessage);
 
         Assert.True(expectedFilePath.EndsWith("weekend.txt",StringComparison.CurrentCultureIgnoreCase));
-        Assert.True(File.Exists(expectedFilePath));
+        Assert.True(File.Exists(expectedFilePath), $"Expected file {expectedFilePath} didnt exist");
     }
 
     [Fact]
@@ -72,7 +126,7 @@ public class FileLoggerTests
         _sut.Log(expectedMessage);
 
         Assert.True(expectedFilePath.EndsWith("weekend.txt", StringComparison.CurrentCultureIgnoreCase));
-        Assert.True(File.Exists(expectedFilePath));
+        Assert.True(File.Exists(expectedFilePath), $"Expected file {expectedFilePath} didnt exist");
     }
 
     [Fact]
@@ -85,7 +139,7 @@ public class FileLoggerTests
         var expectedMessage = "test";
         _sut.Log(expectedMessage);
 
-        Assert.True(File.Exists(expectedFilePath));
+        Assert.True(File.Exists(expectedFilePath), $"Expected file {expectedFilePath} didnt exist");
     }
 
     [Fact]
@@ -116,11 +170,14 @@ public class FileLoggerTests
         GetAWeekday();
 
         var expectedFilePath = GetExpectedFilePath();
-
+        if (File.Exists(expectedFilePath))
+        {
+            File.Delete(expectedFilePath);
+        }
         var expectedMessage = "test";
         _sut.Log(expectedMessage);
 
-        Assert.True(File.Exists(expectedFilePath));
+        Assert.True(File.Exists(expectedFilePath),$"Expected file {expectedFilePath} didnt exist");
     }
 
     private DateTime GetAWeekday()
@@ -141,15 +198,21 @@ public class FileLoggerTests
     private string GetExpectedFilePath()
     {
         var currentTime = _systemFunctions.GetCurrentDateTime();
-        if (currentTime.DayOfWeek==DayOfWeek.Saturday || currentTime.DayOfWeek==DayOfWeek.Sunday)
+        if (currentTime.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
         {
-            return Path.Combine(_outputPath, "weekend.txt");
+            return GetPath("weekend.txt");
         }
 
-        var expectedFilePath = Path.Combine(_outputPath, $"{_systemFunctions.GetCurrentDateTime():yyyyMMdd}.txt");
+        var expectedFilePath = GetPath($"log{_systemFunctions.GetCurrentDateTime():yyyyMMdd}.txt");
         
         return expectedFilePath;
     }
+
+    private string GetPath(string fileName)
+    {
+        return Path.Combine(_outputPath, fileName);
+    }
+
 }
 
 public class FakeSystemFunctions : ISystemFunctions

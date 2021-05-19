@@ -23,7 +23,7 @@ public class FileLogger
     private string GetLogFileName(DateTime currentTime)
     {
         if (currentTime.IsWeekend() 
-            && File.Exists(Path.Combine(_path,"weekend.txt")))
+            && File.Exists(GetPath("weekend.txt")))
         {
             var weekend = "weekend.txt";
             var created = File.GetCreationTime(GetPath(weekend));
@@ -32,9 +32,14 @@ public class FileLogger
 
             if (fileDate.DayOfWeek == DayOfWeek.Sunday)
                 fileDate=fileDate.AddDays(-1);
+            var w = GetPath("weekend.txt");
+            var x = GetPath($"weekend-{fileDate:yyyyMMdd}.txt");
+            if (File.Exists(x))
+            {
+                
+            }
             //rename to saturday of that weekend
-            File.Move(GetPath("weekend.txt"),GetPath($"weekend-{fileDate:yyyyMMdd}.txt"));
-
+            File.Move(GetPath("weekend.txt"),GetPath($"weekend-{fileDate:yyyyMMdd}.txt"),true);
         }
 
         if(currentTime.IsWeekend())
@@ -42,7 +47,7 @@ public class FileLogger
             return GetPath("weekend.txt");
         }
 
-        return GetPath( $"{currentTime:yyyyMMdd}.txt");
+        return GetPath( $"log{currentTime:yyyyMMdd}.txt");
     }
 
     private string GetPath(string fileName)
