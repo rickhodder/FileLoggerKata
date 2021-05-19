@@ -42,11 +42,6 @@ public class FileLoggerTests
         var weekendFile = GetPath("weekend.txt");
         var nextWeekendFile = GetPath($"weekend-{nextSaturday:yyyyMMdd}.txt");
 
-        if (File.Exists(GetPath(weekendFile)))
-        {
-            File.Delete(weekendFile);
-        }
-
         // if i dont put this in using, it locks
         using (var _ = File.Create(weekendFile))
         {
@@ -54,11 +49,6 @@ public class FileLoggerTests
 
         File.SetCreationTime(weekendFile,saturday);
         File.SetLastWriteTime(weekendFile, saturday);
-
-        if (File.Exists(nextWeekendFile))
-        {
-            File.Delete(nextWeekendFile);
-        }
 
         var expectedMessage = "test";
         _systemFunctions.CurrentDateTime = nextSaturday;
@@ -75,22 +65,12 @@ public class FileLoggerTests
     {
         var expectedFilePath = GetExpectedFilePath();
 
-        if (File.Exists(expectedFilePath))
-        {
-            File.Delete(expectedFilePath);
-        }
-
         var expectedMessage = "test";
         _sut.Log(expectedMessage);
 
         _systemFunctions.CurrentDateTime = _systemFunctions.CurrentDateTime.AddDays(1);
 
         var expectedFilePath2 = GetExpectedFilePath();
-
-        if (File.Exists(expectedFilePath2))
-        {
-            File.Delete(expectedFilePath2);
-        }
 
         _sut.Log(expectedMessage);
 
@@ -103,8 +83,6 @@ public class FileLoggerTests
         _systemFunctions.CurrentDateTime = GetASaturday();
 
         var expectedFilePath = GetExpectedFilePath();
-        if (File.Exists(expectedFilePath))
-            File.Delete(expectedFilePath);
 
         var expectedMessage = "test";
         _sut.Log(expectedMessage);
@@ -119,8 +97,6 @@ public class FileLoggerTests
         _systemFunctions.CurrentDateTime = GetASunday();
 
         var expectedFilePath = GetExpectedFilePath();
-        if (File.Exists(expectedFilePath))
-            File.Delete(expectedFilePath);
 
         var expectedMessage = "test";
         _sut.Log(expectedMessage);
@@ -133,8 +109,6 @@ public class FileLoggerTests
     public void Log_CreatesLogFileBasedOnDateWeekday()
     {
         var expectedFilePath = GetExpectedFilePath();
-        if(File.Exists(expectedFilePath))
-            File.Delete(expectedFilePath);
 
         var expectedMessage = "test";
         _sut.Log(expectedMessage);
@@ -170,10 +144,7 @@ public class FileLoggerTests
         GetAWeekday();
 
         var expectedFilePath = GetExpectedFilePath();
-        if (File.Exists(expectedFilePath))
-        {
-            File.Delete(expectedFilePath);
-        }
+
         var expectedMessage = "test";
         _sut.Log(expectedMessage);
 
